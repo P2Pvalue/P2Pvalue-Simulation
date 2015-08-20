@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <title>contributors distribution plotter for github projects</title>
+  </head>
+  <body>
+    <h1>Plotting GitHub contributions</h1>
+    <label>Write a github repository URL</label>
+    <input type="text" id="githubrepo" name="githubrepo">
+    <input type="button" value="plot!" onclick="loadRepo()">
+  </body>
+  <link rel="stylesheet" href="build/xcharts.css"/>
+  <figure style="width: 1400px; height: 500px;" id="myChart"></figure>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <script src="build/xcharts.js"></script>
+  <script src="plot-contributors.js"></script>
+</html>
