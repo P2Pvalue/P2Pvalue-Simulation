@@ -118,12 +118,7 @@ var processData = function(data){
   return dat;
 };
 
-var loadRepo = function(){
-  var githubUrlString =  document.getElementById('githubrepo').value;
-  // expecting string of the form https://github.com/:user/:repo/
-  var splitted = githubUrlString.split('/');
-  var user = splitted[3];
-  var repo = splitted[4];
+var repoContribs = function(user, repo){
 
   var request = new XMLHttpRequest();
 
@@ -142,4 +137,14 @@ var loadRepo = function(){
   request.open('get', 'https://api.github.com/repos/' + user + '/' + repo +'/stats/contributors', true);
 
   request.send();
+};
+
+var loadProcessData = function(){
+  var githubUrlString =  document.getElementById('githubrepo').value;
+  // expecting string of the form https://github.com/:user/:repo/
+  var splitted = githubUrlString.split('/');
+  var user = splitted[3];
+  var repo = splitted[4];
+  repoContribs(user, repo);
+  
 };
