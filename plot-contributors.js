@@ -1,4 +1,5 @@
 var processData = function(data){
+
   var weeks = [];
   var total = [];
   var dat = {
@@ -12,56 +13,106 @@ var processData = function(data){
     "comp": [{
       "type": "line-dotted",
       "data": []
-    }],
+    }]
   };
+
+  var roleChanges = [];
+
   d = JSON.parse(data);
   d.forEach(
     function(cont){
+      // week index
       var i = 0;
       cont.weeks.forEach(function() {
-        var currentWeek = weeks[i] || 
-          function() {
-            (weeks[i] = {contribs: []});
-            return weeks[i];
-          }();
 
-        currentWeek[cont.author.id]  = 
-          ((i>0)? weeks[i-1][cont.author.id] : 0) + 
-          cont.weeks[i].c;
-        
+        // currentWeek saves the contributor number of contributions until that week
+        var currentWeek = weeks[i] ||
+          (function() {
+            weeks[i] = {contribs: []};
+            return weeks[i];
+          })();
+
+        currentWeek[cont.author.id]  =
+          {
+            num : ((i>0)? weeks[i-1][cont.author.id].num : 0) +
+              cont.weeks[i].c
+          };
+
         if (typeof total[i] === 'undefined'){
-            total[i] = 0;
+          total[i] = 0;
         }
 
         total[i] = total[i] + cont.weeks[i].c;
 
-        currentWeek.contribs.push( currentWeek[cont.author.id]);
+        currentWeek.contribs.push({author: cont.author.id, num: currentWeek[cont.author.id].num});
         i += 1;
       });
     });
 
+  // week index
   var x = 0;
+
+  // total contributions until x week in each iteration
   var weekContrib = 0;
+
   weeks.forEach(function(w){
+
     w.contribs.sort(function(a, b){
-      return b - a;
+      return b.num - a.num;
     });
+
     var subTotal = 0;
     dat.main[0].data.push({x: x, y: 0});
     dat.comp[0].data.push({x: x, y: 0});
 
     weekContrib += total[x];
+
     w.contribs.forEach(function(c){
 
       if (subTotal < 0.90 * weekContrib){
         dat.main[0].data[x].y += 1;
+
+        weeks[x][c.author].role = '1(core)';
       }
-      else if (c > 0) {
-        dat.comp[0].data[x].y += 1;
+      else {
+        if (c.num > 0) {
+          dat.comp[0].data[x].y += 1;
+        }
+        weeks[x][c.author].role = '9(contributor)';
       }
-      subTotal += c;
+
+      var currentRole = weeks[x][c.author].role;
+      var previousRole;
+
+      if (x>0){
+        previousRole = weeks[x-1][c.author].role;
+      }
+
+      if (previousRole != currentRole) {
+        roleChanges.push(
+          {
+            contributor: c.author,
+            weekIndex: x,
+            roleChange:
+            {
+              prev: previousRole,
+              curr: currentRole
+            }
+          }
+        );
+      }
+
+      subTotal += c.num;
     });
     x += 1;
+  });
+
+  console.log(JSON.stringify(roleChanges));
+
+  roleChanges.forEach(function(v){
+    if (v.roleChange.prev){
+      console.log(v);
+    }
   });
 
   return dat;
@@ -77,14 +128,17 @@ var loadRepo = function(){
   var request = new XMLHttpRequest();
 
   request.onload = function() {
+
     var response = this.responseText;
     var myChart = document.getElementById('myChart');
+
     while (myChart.firstChild) {
       myChart.removeChild(myChart.firstChild);
     }
+
     myChart = new xChart('bar', processData(response), '#myChart');
   };
-  
+
   request.open('get', 'https://api.github.com/repos/' + user + '/' + repo +'/stats/contributors', true);
 
   request.send();
