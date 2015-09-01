@@ -1,4 +1,4 @@
-var processData = function(data){
+var processContribsData = function(contributorsData){
 
   var weeks = [];
   var total = [];
@@ -18,8 +18,7 @@ var processData = function(data){
 
   var roleChanges = [];
 
-  d = JSON.parse(data);
-  d.forEach(
+  contributorsData.forEach(
     function(cont){
       // week index
       var i = 0;
@@ -120,31 +119,44 @@ var processData = function(data){
 
 var repoContribs = function(user, repo){
 
+  requestHandle(
+    'https://api.github.com/repos/' + user + '/' + repo +'/stats/contributors',
+    function(data){
+      var myChart = document.getElementById('myChart');
+
+      // clear previous plotted data
+      while (myChart.firstChild) {
+        myChart.removeChild(myChart.firstChild);
+      }
+
+      myChart = new xChart('bar', processContribsData(data), '#myChart');
+
+    });
+};
+
+// Expects the URL of the get request and a function to proccess the received data
+var requestHandle = function(url, callback){
+
   var request = new XMLHttpRequest();
 
-  request.onload = function() {
-
-    var response = this.responseText;
-    var myChart = document.getElementById('myChart');
-
-    while (myChart.firstChild) {
-      myChart.removeChild(myChart.firstChild);
-    }
-
-    myChart = new xChart('bar', processData(response), '#myChart');
+  request.onload = function(){
+    var data = JSON.parse(this.responseText);
+    callback(data);
   };
 
-  request.open('get', 'https://api.github.com/repos/' + user + '/' + repo +'/stats/contributors', true);
+  request.open('get', url, true);
 
   request.send();
+  
 };
 
 var loadProcessData = function(){
+
   var githubUrlString =  document.getElementById('githubrepo').value;
   // expecting string of the form https://github.com/:user/:repo/
   var splitted = githubUrlString.split('/');
   var user = splitted[3];
   var repo = splitted[4];
+
   repoContribs(user, repo);
-  
 };
