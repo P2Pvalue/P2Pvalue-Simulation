@@ -144,6 +144,12 @@ var requestHandle = function(url, callback){
     callback(data);
   };
 
+  var oauthToken = document.getElementById('oauthtoken').value;
+
+  if (oauthToken){
+    url += '?access_token=' + oauthToken;
+  }
+
   request.open('get', url, true);
 
   request.send();

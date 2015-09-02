@@ -5,12 +5,20 @@
   </head>
   <body>
     <h1>Plotting GitHub contributions</h1>
-    <label>Write a github repository URL
-    <p>
-      (example: https://github.com/openhatch/oh-mainline/)
-    </p></label>
-    <input type="text" id="githubrepo" name="githubrepo">
-    <input type="button" value="plot!" onclick="loadProcessData()">
+    <div>
+      <label>Write a github repository URL
+        <p>
+          (example: https://github.com/openhatch/oh-mainline/)
+      </p></label>
+      <input type="text" id="githubrepo" name="githubrepo"/>
+      <input type="button" value="plot!" onclick="loadProcessData()"/>
+    </div>
+    <div>
+      <label>
+        (optional) Oauth token
+      </label>
+      <input type="text" name="oauthtoken" id="oauthtoken"/>
+    </div>
   </body>
   <link rel="stylesheet" href="xchartsBuild/xcharts.css"/>
   <figure style="width: 1400px; height: 500px;" id="myChart"></figure>
