@@ -135,22 +135,64 @@ var repoContribs = function(user, repo){
 };
 
 // Expects the URL of the get request and a function to proccess the received data
+// Parsing link headers, source: https://gist.github.com/niallo/3109252
+function parse_link_header(header) {
+  if (header.length === 0) {
+    throw new Error("input must not be of zero length");
+  }
+
+  // Split parts by comma
+  var parts = header.split(',');
+  var links = {};
+  // Parse each part into a named link
+  for(var i=0; i<parts.length; i++) {
+    var section = parts[i].split(';');
+    if (section.length !== 2) {
+      throw new Error("section could not be split on ';'");
+    }
+    var url = section[0].replace(/<(.*)>/, '$1').trim();
+    var name = section[1].replace(/rel="(.*)"/, '$1').trim();
+    links[name] = url;
+  }
+  return links;
+}
+
 var requestHandle = function(url, callback){
 
   var request = new XMLHttpRequest();
-
-  request.onload = function(){
-    var data = JSON.parse(this.responseText);
-    callback(data);
+  var responseData = [];
+  function iterateResponsePages() {
+    responseData = responseData.concat(JSON.parse(this.responseText));
+    var header = this.getResponseHeader('Link');
+    console.log(header);
+    if (header && header !== null) {
+      var parsedLink = parse_link_header(header);
+      if (parsedLink.next) {
+        console.log(parsedLink);
+        var r = new XMLHttpRequest();
+        r.onload = iterateResponsePages;
+        r.open('get', parsedLink.next, false);
+        r.send();
+      } else {
+        console.log(parsedLink, responseData);
+        callback(responseData);
+      }
+    } else {
+      console.log(responseData);
+      callback(responseData);
+    }
   };
+
+  request.onload = iterateResponsePages;
 
   var oauthToken = document.getElementById('oauthtoken').value;
 
+  url += '?per_page=100';
   if (oauthToken){
     url += '?access_token=' + oauthToken;
   }
 
-  request.open('get', url, true);
+  request.open('get', url, false);
 
   request.send();
   
