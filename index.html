@@ -6,21 +6,30 @@
   <body>
     <h1>Plotting GitHub contributions</h1>
     <div>
-      <label>Write a github repository URL
-        <p>
-          (example: https://github.com/openhatch/oh-mainline/)
-      </p></label>
-      <input type="text" id="githubrepo" name="githubrepo"/>
-      <input type="button" value="plot!" onclick="loadProcessData()"/>
-    </div>
-    <div>
       <label>
         (optional) Oauth token
       </label>
       <input type="text" name="oauthtoken" id="oauthtoken"/>
     </div>
+    <div>
+      <label>Github repository URL</label>
+      <input type="text" id="githubrepo" name="githubrepo" placeholder="https://github.com/openhatch/oh-mainline"/>       <input type="button" value="plot!" onclick="loadProcessData()"/>
+    </div>
+    <div>
+      <h2>Download files</h2>
+      <div>
+        <a id="contributors-data">Contributors data (csv format)
+        </a>
+      </div
+      <div>
+        <a  id="friends-data">Friends data (csv format). It can take some time, be patient.
+        </a>
+      </div>
+    </div>
   </body>
   <link rel="stylesheet" href="xchartsBuild/xcharts.css"/>
+      <h2>Contributors data graph
+      </h2>
   <figure style="width: 1400px; height: 500px;" id="myChart"></figure>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
   <script src="xchartsBuild/xcharts.js"></script>
