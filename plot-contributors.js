@@ -19,8 +19,12 @@ var processContribsData = function(contributorsData){
 
   var roleChanges = [];
 
+  userContribs = [];
   contributorsData.forEach(
     function(cont){
+
+      userContribs.push(cont.total);
+
       // week index
       var i = 0;
       cont.weeks.forEach(function() {
@@ -212,6 +216,15 @@ var processContribsData = function(contributorsData){
   document.getElementById('rolechanges-data')
     .setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(csvRoleChanges));
   console.log('csv:', csvRoleChanges);
+
+  sortedContribs = userContribs.sort(function(a, b){
+    return b - a;
+  });
+
+  document.getElementById('percontributor-data')
+    .setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(sortedContribs.toString()));
+  console.log(sortedContribs.toString());
+  
   console.log(dat);
   console.log(weeks);
 
@@ -253,6 +266,8 @@ var repoContribs = function(user, repo){
       document.getElementById('contributors-data').removeAttribute('href');
       document.getElementById('friends-data').removeAttribute('href');
       document.getElementById('rolechanges-data').removeAttribute('href');
+      document.getElementById('percontributor-data').removeAttribute('href');
+
       // clear previous plotted data
       while (myChart.firstChild) {
         myChart.removeChild(myChart.firstChild);
@@ -425,6 +440,6 @@ var loadProcessData = function(){
   var repo = splitted[4];
 
   repoContribs(user, repo);
-//  repoEvents(user, repo);
+  repoEvents(user, repo);
 //  repoFriends(user, repo);
 };
