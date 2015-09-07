@@ -38,11 +38,29 @@ var processContribsData = function(contributorsData){
               cont.weeks[i].c
           };
 
+        // check if return someone who left, if not, keep role as leftCommunity
+        if (i>0 && weeks[i-1][cont.author.id].role === "leftCommunity"){
+          if (cont.weeks[i].c > 0) {
+            currentWeek[cont.author.id].role = "";
+          } else {
+            currentWeek[cont.author.id].role = "leftCommunity";
+          }
+        }
+
         if (typeof total[i] === 'undefined'){
           total[i] = 0;
         }
 
         total[i] = total[i] + cont.weeks[i].c;
+
+        // leave community effect: 0.01 chance if no recent contribution
+        if (Math.random() < 0.01 && weeks[i][cont.author.id].num > 0 && i > 2 &&
+            weeks[i][cont.author.id].num === weeks[i-1][cont.author.id].num &&
+            weeks[i-1][cont.author.id].num === weeks[i-2][cont.author.id].num &&
+            weeks[i-i][cont.author.id].role !== 'leftCommunity'
+           ) {
+          currentWeek[cont.author.id].role = 'leftCommunity';
+        }
 
         currentWeek.contribs.push({author: cont.author.id, num: currentWeek[cont.author.id].num});
         i += 1;
@@ -73,13 +91,13 @@ var processContribsData = function(contributorsData){
       if (subTotal < 0.90 * weekContrib){
         dat.main[0].data[x].y += 1;
         weeks[x][c.author].role = '1(core)';
-        
+
       }
       else {
-        if (c.num > 0) {
+        if (c.num > 0 && weeks[x][c.author].role!== 'leftCommunity') {
           dat.comp[0].data[x].y += 1;
+          weeks[x][c.author].role = '9(contributor)';
         }
-        weeks[x][c.author].role = '9(contributor)';
       }
 
       csv[x] = [dat.main[0].data[x].y, dat.comp[0].data[x].y];
@@ -109,7 +127,7 @@ var processContribsData = function(contributorsData){
     });
     x += 1;
   });
-  
+
   var csvText = "";
   csv.forEach(function(d){
     csvText += d[0] + ", " + d[1] + "\n";
@@ -146,7 +164,7 @@ var updateAdjacencyList = function(nodes, adjacencyList){
             adjacencyList[userKey2] = {};
           }
 
-          adjacencyList[userKey1][userKey2] = 
+          adjacencyList[userKey1][userKey2] =
             (adjacencyList[userKey1][userKey2] || 0) + 1;
           adjacencyList[userKey2][userKey1] = adjacencyList[userKey1][userKey2];
 
@@ -162,7 +180,7 @@ var repoContribs = function(user, repo){
     'https://api.github.com/repos/' + user + '/' + repo +'/stats/contributors',
     function(data){
       var myChart = document.getElementById('myChart');
-      
+
       document.getElementById('contributors-data').removeAttribute('href');
       document.getElementById('friends-data').removeAttribute('href');
       // clear previous plotted data
@@ -213,7 +231,7 @@ var repoEvents = function(user, repo) {
         .setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(sortedFriendsNumbers.toString()));
       console.log(sortedFriendsNumbers.toString());
 
-    }); 
+    });
 
 };
 
@@ -289,7 +307,6 @@ var requestHandle = function(url, callback){
       var parsedLink = parse_link_header(header);
       if (parsedLink.last){
         var lastPage = parsedLink.last.split('&page=')[1];
-        console.log('LAST!', lastPage);
 
         for (var i = 2; i <= lastPage; i++){
           var r = new XMLHttpRequest();
@@ -297,7 +314,6 @@ var requestHandle = function(url, callback){
             responseData = responseData.concat(JSON.parse(this.responseText));
             numResponses +=1;
             if (numResponses == lastPage){
-              console.log('FOO!!!');
               callback(responseData);
             }
           };
