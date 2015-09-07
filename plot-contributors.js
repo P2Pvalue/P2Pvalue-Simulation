@@ -74,6 +74,7 @@ var processContribsData = function(contributorsData){
   var weekContrib = 0;
 
   var csv = [];
+
   weeks.forEach(function(w){
 
     w.contribs.sort(function(a, b){
@@ -85,6 +86,16 @@ var processContribsData = function(contributorsData){
     dat.comp[0].data.push({x: x, y: 0});
 
     weekContrib += total[x];
+
+    w.roleChanges = //(x > 0) ? weeks[x-1].roleChanges :
+      {
+        '90sto1s': 0,
+        '90sto9s': 0,
+        '9sto1s': 0,
+        '9sto90s': 0,
+        '1sto9s': 0,
+        '1sto90s':0
+      };
 
     w.contribs.forEach(function(c){
 
@@ -135,14 +146,72 @@ var processContribsData = function(contributorsData){
 
   console.log(csvText);
   document.getElementById('contributors-data').setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(csvText));
-//  console.log(JSON.stringify(roleChanges));
+  //  console.log(JSON.stringify(roleChanges));
 
   roleChanges.forEach(function(v){
+    // 90s to ...
+
+    var rChangeKey = '';
+
+    switch (v.roleChange.prev){
+      case undefined:
+      case 'leftCommunity':
+        rChangeKey += '90sto';
+      break;
+      case '9(contributor)':
+        rChangeKey += '9sto';
+      break;
+      case '1(core)':
+        rChangeKey += '1sto';
+      break;
+    }
+
+    switch (v.roleChange.curr){
+      case 'leftCommunity':
+        rChangeKey += '90s';
+      break;
+      case '9(contributor)':
+        rChangeKey += '9s';
+      break;
+      case '1(core)':
+        rChangeKey += '1s';
+      break;
+    }
+
+    weeks[v.weekIndex].roleChanges[rChangeKey] += 1;
+
     if (v.roleChange.prev){
       console.log(v);
     }
   });
 
+  var csvRoleChanges = "90sto9s, 90sto1s, 9sto90s, 9sto1s, 1sto90s, 1sto9s\n";
+
+  var wIndex = 0;
+  weeks.forEach(function(w){
+    if (wIndex >0){
+      wprev = weeks[wIndex-1];
+      w.roleChanges['90sto9s'] = wprev.roleChanges['90sto9s'] + w.roleChanges['90sto9s'];
+      w.roleChanges['90sto1s'] = wprev.roleChanges['90sto1s'] + w.roleChanges['90sto1s'];
+      w.roleChanges['9sto90s'] = wprev.roleChanges['9sto90s'] + w.roleChanges['9sto90s'];
+      w.roleChanges['9sto1s'] = wprev.roleChanges['9sto1s'] + w.roleChanges['9sto1s'];
+      w.roleChanges['1sto90s'] = wprev.roleChanges['1sto90s'] + w.roleChanges['1sto90s'];
+      w.roleChanges['1sto9s'] = wprev.roleChanges['1sto9s']  + w.roleChanges['1sto9s'];
+    }
+
+    csvRoleChanges += w.roleChanges['90sto9s'] + ', ' +
+      w.roleChanges['90sto1s'] + ', ' +
+      w.roleChanges['9sto90s'] + ', ' +
+      w.roleChanges['9sto1s'] + ', ' +
+      w.roleChanges['1sto90s'] + ', ' +
+      w.roleChanges['1sto9s'] + '\n';
+
+    wIndex +=1;
+  });
+
+  document.getElementById('rolechanges-data')
+    .setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(csvRoleChanges));
+  console.log('csv:', csvRoleChanges);
   console.log(dat);
   console.log(weeks);
 
@@ -183,6 +252,7 @@ var repoContribs = function(user, repo){
 
       document.getElementById('contributors-data').removeAttribute('href');
       document.getElementById('friends-data').removeAttribute('href');
+      document.getElementById('rolechanges-data').removeAttribute('href');
       // clear previous plotted data
       while (myChart.firstChild) {
         myChart.removeChild(myChart.firstChild);
@@ -355,6 +425,6 @@ var loadProcessData = function(){
   var repo = splitted[4];
 
   repoContribs(user, repo);
-  repoEvents(user, repo);
+//  repoEvents(user, repo);
 //  repoFriends(user, repo);
 };
