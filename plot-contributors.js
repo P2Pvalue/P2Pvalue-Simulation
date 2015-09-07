@@ -1,5 +1,4 @@
 var adjacencyList = {};
-
 var processContribsData = function(contributorsData){
 
   var weeks = [];
@@ -110,8 +109,6 @@ var processContribsData = function(contributorsData){
     });
     x += 1;
   });
-
-//  console.log(csv);
   
   var csvText = "";
   csv.forEach(function(d){
@@ -143,7 +140,7 @@ var updateAdjacencyList = function(nodes, adjacencyList){
       }
 
       for(var userKey2 in nodes){
-        if (nodes.hasOwnProperty(userKey2) && userKey2!==userKey1){
+        if (Math.random() < 0.5 && nodes.hasOwnProperty(userKey2) && userKey2!==userKey1){
 
           if (!adjacencyList[userKey2]){
             adjacencyList[userKey2] = {};
