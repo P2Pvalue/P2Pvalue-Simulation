@@ -1,4 +1,5 @@
 var adjacencyList = {};
+var contributorsData = [];
 var processContribsData = function(contributorsData){
 
   var weeks = [];
@@ -39,12 +40,12 @@ var processContribsData = function(contributorsData){
         currentWeek[cont.author.id]  =
           {
             num : ((i>0)? weeks[i-1][cont.author.id].num : 0) +
-              cont.weeks[i].c
+              ((cont.weeks[i])? cont.weeks[i].c : 0)
           };
 
         // check if return someone who left, if not, keep role as leftCommunity
         if (i>0 && weeks[i-1][cont.author.id].role === "leftCommunity"){
-          if (cont.weeks[i].c > 0) {
+          if (cont.weeks[i] && cont.weeks[i].c > 0) {
             currentWeek[cont.author.id].role = "";
           } else {
             currentWeek[cont.author.id].role = "leftCommunity";
@@ -55,7 +56,7 @@ var processContribsData = function(contributorsData){
           total[i] = 0;
         }
 
-        total[i] = total[i] + cont.weeks[i].c;
+        total[i] = total[i] + (cont.weeks[i])? cont.weeks[i].c : 0;
 
         // leave community effect: 0.01 chance if no recent contribution
         if (Math.random() < 0.01 && weeks[i][cont.author.id].num > 0 && i > 2 &&
@@ -223,7 +224,7 @@ var processContribsData = function(contributorsData){
 
   document.getElementById('percontributor-data')
     .setAttribute('href', 'data:application/csv;charset=utf-8,'+encodeURI(sortedContribs.toString()));
-  console.log(sortedContribs.toString());
+  console.log('Sorted contribs!', sortedContribs.toString());
   
   console.log(dat);
   console.log(weeks);
@@ -273,13 +274,61 @@ var repoContribs = function(user, repo){
         myChart.removeChild(myChart.firstChild);
       }
       contributorsData = data;
-      myChart = new xChart('bar', processContribsData(data), '#myChart');
-
+      // myChart = new xChart('bar', processContribsData(data), '#myChart');
     });
 };
 
 var repoEvents = function(user, repo) {
   var involvedInIssue = {};
+  var contributorsDataIndex = {};
+  var weeksLength = contributorsData[0].weeks.length;
+  requestHandle(
+    'https://api.github.com/repos/' + user + '/' + repo + '/issues/comments',
+    function(data){
+      data.forEach(function(d){
+        if (d.issue_url && !involvedInIssue[d.issue_url]) {
+          involvedInIssue[d.issue_url] = {};
+        }
+        if(d.issue_url && d.user) {
+          involvedInIssue[d.issue_url][d.user.id] = true;
+          if (!contributorsDataIndex[d.user.id]){
+            var j;
+            for (j = 0; j < contributorsData.length; j++){
+              if (contributorsData[j].author.id === d.user.id){
+                contributorsDataIndex[d.user.id] = j;
+                break;
+              }
+            }
+            if (j === contributorsData.length){
+              console.log('NOT FOUND!', d.user.id, d.user.login);
+              contributorsDataIndex[d.user.id] = j;
+              contributorsData[j] = {
+                author : {
+                  login: d.user.login,
+                  id: d.user.id
+                },
+                weeks : [],
+                total: 0
+              };
+            }
+          }
+          var con = contributorsData[contributorsDataIndex[d.user.id]];
+          var ws = con.weeks;
+          var week =((new Date() - new Date(d.created_at)) / (1000 * 3600 * 24 * 7)).toString().split('.')[0];
+          if (ws[weeksLength - 1 - week]){
+            ws[weeksLength - 1 - week].c += 1;
+          } else {
+            ws[weeksLength - 1 - week] = {
+              c : 1
+            };
+          }
+          con.total += 1;
+        }
+      });
+      console.log(contributorsData);
+      processContribsData(contributorsData);
+    });
+
   requestHandle(
     'https://api.github.com/repos/' + user + '/' + repo + '/issues/events',
     function(data) {
@@ -289,7 +338,7 @@ var repoEvents = function(user, repo) {
         }
         // there are corrupted data without actors, for instance when user mention an user that do not exists
         if(d.actor !== null){
-          involvedInIssue[d.issue.url][d.actor.login] = true;
+          involvedInIssue[d.issue.url][d.actor.id] = true;
         }
       });
 
